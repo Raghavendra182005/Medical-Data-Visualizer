@@ -1,0 +1,106 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from io import StringIO
+
+# Embedded CSV data as a string (for online compilers)
+csv_data = StringIO("""
+date,value
+2016-05-09,1200
+2016-05-10,1300
+2016-06-10,1130
+2016-07-10,1450
+2016-08-10,1700
+2016-09-10,2300
+2017-01-10,1800
+2017-02-10,2100
+2017-03-10,1900
+2017-04-10,2200
+2017-05-10,2400
+2017-06-10,2500
+2018-01-10,2700
+2018-03-10,2600
+2018-05-10,3000
+2018-06-10,2900
+2018-07-10,3100
+2018-08-10,3200
+2019-01-10,3400
+2019-03-10,3500
+2019-05-10,4000
+2019-07-10,3800
+2019-09-10,3700
+2019-12-03,3600
+""")
+
+# Load data
+df = pd.read_csv(csv_data, parse_dates=['date'], index_col='date')
+
+# Clean data (remove top and bottom 2.5%)
+low = df['value'].quantile(0.025)
+high = df['value'].quantile(0.975)
+df = df[(df['value'] >= low) & (df['value'] <= high)]
+
+# Function 1: Line Plot
+def draw_line_plot():
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(df.index, df['value'], color='red', linewidth=2)
+    ax.set_title('Daily freeCodeCamp Forum Page Views 5/2016-12/2019')
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Page Views')
+    plt.tight_layout()
+    fig.savefig("line_plot.png")
+    return fig
+
+# Function 2: Bar Plot
+def draw_bar_plot():
+    df_bar = df.copy()
+    df_bar['year'] = df_bar.index.year
+    df_bar['month'] = df_bar.index.strftime('%B')
+
+    # Order the months properly
+    month_order = ['January', 'February', 'March', 'April', 'May', 'June',
+                   'July', 'August', 'September', 'October', 'November', 'December']
+    
+    df_pivot = df_bar.groupby(['year', 'month'])['value'].mean().unstack()
+    df_pivot = df_pivot[month_order]
+
+    fig = df_pivot.plot(kind='bar', figsize=(12, 6)).figure
+    plt.xlabel("Years")
+    plt.ylabel("Average Page Views")
+    plt.legend(title="Months")
+    plt.tight_layout()
+    fig.savefig("bar_plot.png")
+    return fig
+
+# Function 3: Box Plot
+def draw_box_plot():
+    df_box = df.copy()
+    df_box.reset_index(inplace=True)
+    df_box['year'] = df_box['date'].dt.year
+    df_box['month'] = df_box['date'].dt.strftime('%b')
+    df_box['month_num'] = df_box['date'].dt.month
+
+    df_box.sort_values('month_num', inplace=True)
+
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+    
+    sns.boxplot(x='year', y='value', data=df_box, ax=axes[0])
+    axes[0].set_title('Year-wise Box Plot (Trend)')
+    axes[0].set_xlabel('Year')
+    axes[0].set_ylabel('Page Views')
+
+    sns.boxplot(x='month', y='value', data=df_box, ax=axes[1])
+    axes[1].set_title('Month-wise Box Plot (Seasonality)')
+    axes[1].set_xlabel('Month')
+    axes[1].set_ylabel('Page Views')
+
+    plt.tight_layout()
+    fig.savefig("box_plot.png")
+    return fig
+
+# Run functions to test in online compilers
+if __name__ == "__main__":
+    draw_line_plot()
+    draw_bar_plot()
+    draw_box_plot()
+    print("Plots saved: line_plot.png, bar_plot.png, box_plot.png")
