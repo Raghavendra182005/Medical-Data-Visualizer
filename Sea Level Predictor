@@ -1,0 +1,58 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.stats import linregress
+from io import StringIO
+
+# Sample sea level data (as a string for online compilers)
+csv_data = StringIO("""
+Year,CSIRO Adjusted Sea Level
+1880,0.0
+1881,0.1
+1882,0.2
+1900,1.0
+1920,2.0
+1940,3.5
+1960,5.0
+1980,6.5
+2000,8.0
+2005,8.6
+2010,9.3
+2013,9.8
+2014,10.0
+2015,10.2
+2016,10.5
+2017,10.8
+2018,11.0
+2019,11.2
+""")
+
+# Load data
+df = pd.read_csv(csv_data)
+
+# Create scatter plot
+plt.figure(figsize=(12, 6))
+plt.scatter(df['Year'], df['CSIRO Adjusted Sea Level'], label='Original Data', color='blue')
+
+# First line of best fit (full data)
+res_full = linregress(df['Year'], df['CSIRO Adjusted Sea Level'])
+x_full = pd.Series(range(1880, 2051))
+y_full = res_full.slope * x_full + res_full.intercept
+plt.plot(x_full, y_full, 'r', label='Fit: All Data')
+
+# Second line of best fit (year ≥ 2000)
+df_recent = df[df['Year'] >= 2000]
+res_recent = linregress(df_recent['Year'], df_recent['CSIRO Adjusted Sea Level'])
+x_recent = pd.Series(range(2000, 2051))
+y_recent = res_recent.slope * x_recent + res_recent.intercept
+plt.plot(x_recent, y_recent, 'green', label='Fit: Since 2000')
+
+# Labels and title
+plt.title('Rise in Sea Level')
+plt.xlabel('Year')
+plt.ylabel('Sea Level (inches)')
+plt.legend()
+
+# Save and show
+plt.tight_layout()
+plt.savefig('sea_level_plot.png')
+plt.show()
